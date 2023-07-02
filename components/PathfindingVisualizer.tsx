@@ -4,11 +4,12 @@ import React, { useEffect, useState } from "react";
 import Queue from "../types/Queue";
 import { Tuple, Node } from "@/types/types";
 import { stringToTuple, tupleToString } from "@/utils/utils";
+import Stack from "@/types/Stack";
 
 const MAX_TARGET_NODES = 1;
 const BOX_WIDTH = 40;
 const ROWS = 15;
-const COLS = 40;
+const COLS = 30;
 
 const intializeGrid = (maxRows: number, maxCols: number) => {
   let initialGrid: Node[][] = [];
@@ -108,6 +109,64 @@ const PathfindingVisualizer = () => {
     processNextNode();
   };
 
+  const dfs = (row: number, col: number) => {
+    const parent = new Map<string, string>();
+    const stack = new Stack();
+    stack.push([row, col]);
+    const visited = new Set();
+    parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
+
+    const processNextNode = () => {
+      if (stack.isEmpty()) {
+        return;
+      }
+
+      const [r, c] = stack.pop()!;
+      console.log([r, c]);
+
+      const nodeKey = JSON.stringify([r, c]);
+      if (visited.has(nodeKey)) {
+        processNextNode();
+        return;
+      } else if (grid[r][c].color === "yellow") {
+        // Target node found
+        tracePath(r, c, parent);
+        return;
+      }
+      visited.add(nodeKey);
+
+      updateNodeColor(r, c, "#50C878");
+      if (c - 1 >= 0) {
+        if (!visited.has(tupleToString([r, c - 1]))) {
+          parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
+        }
+        stack.push([r, c - 1]);
+      }
+      if (r + 1 < ROWS) {
+        if (!visited.has(tupleToString([r + 1, c]))) {
+          parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
+        }
+        stack.push([r + 1, c]);
+      }
+      if (c + 1 < COLS) {
+        if (!visited.has(tupleToString([r, c + 1]))) {
+          parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
+        }
+        stack.push([r, c + 1]);
+      }
+      if (r - 1 >= 0) {
+        if (!visited.has(tupleToString([r - 1, c]))) {
+          parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
+        }
+        stack.push([r - 1, c]);
+      }
+
+      setTimeout(processNextNode, 5);
+    };
+
+    processNextNode();
+  };
+
   const tracePath = (row: number, col: number, parent: Map<string, string>) => {
     const path: Tuple[] = [];
     while (parent.get(tupleToString([row, col])) !== tupleToString([-1, -1])) {
@@ -135,7 +194,7 @@ const PathfindingVisualizer = () => {
         setCurrentTargetNodes(currentTargetNodes + 1);
       }
     } else {
-      bfs(rowIdx, colIdx);
+      dfs(rowIdx, colIdx);
     }
   };
 
@@ -154,7 +213,7 @@ const PathfindingVisualizer = () => {
   }, [currentTargetNodes]);
 
   return (
-    <div className="flex flex-col justify-center items-center w-full pt-[200px] pb-[100px] bg-blue-300">
+    <div className="flex flex-col justify-center items-center w-full pt-[200px] pb-[100px] bg-gradient-to-b from-green-200 to-blue-300">
       <div
         className={`m-auto w-[${BOX_WIDTH * COLS}px] h-[${
           BOX_WIDTH * ROWS

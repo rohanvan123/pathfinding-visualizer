@@ -1,30 +1,71 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { FaChevronDown } from "react-icons/fa";
 
 const visualizations = [
-  "Algorithms",
   "Breadth First Search",
   "Depth First Search",
   "Dijkstra's",
 ];
 
 const NavBar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(visualizations[0]);
+
+  const handleTogleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleOptionSelect = (option: string) => {
+    setSelectedOption(option);
+    setIsOpen(false);
+  };
+
   return (
     <div
       className="w-full h-[100px] flex flex-row justify-evenly gap-[60%] items-center border-b-[3px] 
-    border-purple-700 bg-purple-300 fixed top-0 z-50"
+    border-green-700 bg-green-500 fixed top-0 z-50"
     >
       <div className="text-[30px] [text-shadow:_4px_4px_0_rgb(0_0_0_/_15%)] text-white">
         Path Algorithms Visualizer
       </div>
-      <select className="h-[40px] rounded-[15px] bg-purple-700 text-white text-[20px]">
-        {visualizations.map((name: string, idx: number) => {
-          return (
-            <option key={idx} value={name} className="">
-              {name}
-            </option>
-          );
-        })}
-      </select>
+      <div className="relative inline-block w-[180px] text-[15px]">
+        <button
+          className="h-[100px] w-full rounded-[8px] text-white text-[17px] bg-green-700 text-left"
+          onClick={handleTogleDropdown}
+        >
+          <div className="flex flex-row justify-between ">
+            <span className="ml-[10px]">Algorithm</span>
+            <FaChevronDown
+              className={`mt-[5px] mr-[10px] dropdown-icon ${
+                isOpen ? "rotated" : ""
+              }`}
+            />
+          </div>
+        </button>
+        {isOpen && (
+          <ul className="text-back rounded-[8px] absolute w-full bg-slate-600 text-white mt-[5px]">
+            {visualizations.map((name: string, idx: number) => {
+              return (
+                <li key={idx} className="items-center">
+                  <button
+                    type="button"
+                    className={`hover:bg-green-600 text-left h-[50px] w-full rounded-[8px] ${
+                      selectedOption === visualizations[idx]
+                        ? "bg-green-600"
+                        : ""
+                    }`}
+                    onClick={() => handleOptionSelect(visualizations[idx])}
+                  >
+                    <span className="ml-[10px]">{name}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };
