@@ -1,5 +1,10 @@
-import Image from "next/image";
+import PathfindingVisualizer from "@/components/PathfindingVisualizer";
+import React from "react";
 
 export default function Home() {
-  return <main></main>;
+  return (
+    <main>
+      <PathfindingVisualizer />
+    </main>
+  );
 }
