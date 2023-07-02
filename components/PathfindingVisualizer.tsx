@@ -1,45 +1,45 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Node from "./Node";
-import Queue from "./Queue";
-import { resolveTypeReferenceDirective } from "typescript";
+import Queue from "../types/Queue";
+import { Tuple, Node } from "@/types/types";
+import { stringToTuple, tupleToString } from "@/utils/utils";
 
-interface Node {
-  row: number;
-  col: number;
-  color: string;
-}
+const MAX_TARGET_NODES = 1;
+const BOX_WIDTH = 40;
+const ROWS = 15;
+const COLS = 40;
 
-type Tuple = [number, number];
+const intializeGrid = (maxRows: number, maxCols: number) => {
+  let initialGrid: Node[][] = [];
 
-const targetNodesMax = 1;
-
-let initialGrid: Node[][] = [];
-
-for (let r = 0; r < 10; r++) {
-  let row: Node[] = [];
-  for (let c = 0; c < 10; c++) {
-    const n: Node = {
-      row: r,
-      col: c,
-      color: "white",
-    };
-    row.push(n);
+  for (let r = 0; r < maxRows; r++) {
+    let row: Node[] = [];
+    for (let c = 0; c < maxCols; c++) {
+      const n: Node = {
+        row: r,
+        col: c,
+        color: "white",
+      };
+      row.push(n);
+    }
+    initialGrid.push(row);
   }
-  initialGrid.push(row);
-}
 
-const tupleToString = (tuple: [number, number]) => {
-  return JSON.stringify(tuple);
-};
-
-const stringToTuple = (str: string) => {
-  return JSON.parse(str);
+  return initialGrid;
 };
 
 const PathfindingVisualizer = () => {
-  const [grid, setGrid] = useState(initialGrid);
+  const resetGrid = () => {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        updateNodeColor(r, c, "white");
+      }
+    }
+    setCurrentTargetNodes(0);
+  };
+
+  const [grid, setGrid] = useState(intializeGrid(ROWS, COLS));
   const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
   const [isSettingTarget, setIsSettingTarget] = useState(false);
 
@@ -78,7 +78,7 @@ const PathfindingVisualizer = () => {
       visited.add(nodeKey);
 
       updateNodeColor(r, c, "#50C878");
-      if (r + 1 < 10) {
+      if (r + 1 < ROWS) {
         if (!visited.has(tupleToString([r + 1, c]))) {
           parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
         }
@@ -90,7 +90,7 @@ const PathfindingVisualizer = () => {
         }
         queue.enqueue([r - 1, c]);
       }
-      if (c + 1 < 10) {
+      if (c + 1 < COLS) {
         if (!visited.has(tupleToString([r, c + 1]))) {
           parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
         }
@@ -102,7 +102,7 @@ const PathfindingVisualizer = () => {
         }
         queue.enqueue([r, c - 1]);
       }
-      setTimeout(processNextNode, 10);
+      setTimeout(processNextNode, 5);
     };
 
     processNextNode();
@@ -128,18 +128,9 @@ const PathfindingVisualizer = () => {
     processNextPathNode(0);
   };
 
-  const resetGrid = () => {
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        updateNodeColor(r, c, "white");
-      }
-    }
-    setCurrentTargetNodes(0);
-  };
-
   const handleNodeClick = (rowIdx: number, colIdx: number) => {
     if (isSettingTarget) {
-      if (currentTargetNodes < targetNodesMax) {
+      if (currentTargetNodes < MAX_TARGET_NODES) {
         updateNodeColor(rowIdx, colIdx, "yellow");
         setCurrentTargetNodes(currentTargetNodes + 1);
       }
@@ -149,7 +140,7 @@ const PathfindingVisualizer = () => {
   };
 
   const handleTargetButtonClick = () => {
-    if (currentTargetNodes === targetNodesMax) {
+    if (currentTargetNodes === MAX_TARGET_NODES) {
       setIsSettingTarget(false);
       return;
     }
@@ -157,19 +148,24 @@ const PathfindingVisualizer = () => {
   };
 
   useEffect(() => {
-    if (currentTargetNodes === targetNodesMax) {
+    if (currentTargetNodes === MAX_TARGET_NODES) {
       setIsSettingTarget(false);
     }
   }, [currentTargetNodes]);
 
   return (
-    <div className="flex flex-col justify-center items-center">
-      <div className="m-auto mt-[50px] w-[400px] h-[400px] grid grid-cols-10">
+    <div className="flex flex-col justify-center items-center w-full pt-[200px] pb-[100px] bg-blue-300">
+      <div
+        className={`m-auto w-[${BOX_WIDTH * COLS}px] h-[${
+          BOX_WIDTH * ROWS
+        }px] grid grid-cols-${COLS}`}
+        style={{ gridTemplateColumns: `repeat(${COLS}, ${BOX_WIDTH}px)` }}
+      >
         {grid.map((row, rowIdx) => {
           return row.map((node, colIdx) => (
             <button
               key={`${rowIdx}-${colIdx}`}
-              className={`h-[40px] w-[40px] border-black border-[1px] border-solid p-[0px]`}
+              className={`h-[${BOX_WIDTH}px] w-[${BOX_WIDTH}px] border-black border-[1px] border-solid p-[0px]`}
               style={{ backgroundColor: node.color }}
               onClick={() => {
                 handleNodeClick(rowIdx, colIdx);
@@ -180,17 +176,17 @@ const PathfindingVisualizer = () => {
       </div>
       <div className="flex flex-row gap-[20px]">
         <button
-          className="mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300"
+          className="mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300 bg-white"
           onClick={resetGrid}
         >
           Reset
         </button>
         <button
-          className={`mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300 ${
+          className={`bg-white mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300 ${
             isSettingTarget ? "bg-slate-300" : ""
           }`}
           onClick={handleTargetButtonClick}
-          disabled={currentTargetNodes === targetNodesMax}
+          disabled={currentTargetNodes === MAX_TARGET_NODES}
         >
           Set Target
         </button>
@@ -200,12 +196,3 @@ const PathfindingVisualizer = () => {
 };
 
 export default PathfindingVisualizer;
-
-// Shortest Path
-// Have a map from the row, col to its parent
-// When we dequeue a node, we check if it is the target node
-// If it is, we backtrack from the target node to the start node
-
-// the indication will be a targetColor
-// we will limit the number of targetNodes to 1
-// but this should be modifiable in the future
