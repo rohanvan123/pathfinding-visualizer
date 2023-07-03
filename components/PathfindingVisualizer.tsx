@@ -3,21 +3,28 @@
 import React, { useContext, useEffect, useState } from "react";
 import Queue from "../types/Queue";
 import { Tuple, Node, FunctionMap } from "@/types/types";
-import { getRandomInt, stringToTuple, tupleToString } from "@/utils/utils";
+import {
+  calcWeight,
+  getRandomInt,
+  stringToTuple,
+  tupleToString,
+} from "@/utils/utils";
 import Stack from "@/types/Stack";
 import AlgorithmContext from "@/context/AlgorithmContext";
 import { visualizations } from "@/data/visualizations";
+import Heap from "@/types/Heap";
 
 /* GRID SETTINGS */
 const MAX_TARGET_NODES = 1;
 const BOX_WIDTH = 40;
 const ROWS = 15;
-const COLS = 30;
+const COLS = 40;
 
 /* COLOR SETTINGS */
 const defaultColor = "white";
 const fillColor = "#50C878";
 const pathColor = "red";
+const startColor = "red";
 const targetColor = "yellow";
 const wallColor = "black";
 
@@ -25,7 +32,7 @@ const wallColor = "black";
 const fillTimeDelay = 5;
 const pathTimeDelay = 30;
 const minWeight = 0;
-const maxWeight = 10;
+const maxWeight = 100;
 
 const intializeGrid = (maxRows: number, maxCols: number) => {
   let initialGrid: Node[][] = [];
@@ -51,7 +58,7 @@ const PathfindingVisualizer = () => {
   const [grid, setGrid] = useState(intializeGrid(ROWS, COLS));
   const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
   const [isSettingTarget, setIsSettingTarget] = useState(false);
-  const [showWeights, setShowWeights] = useState(false);
+  const [showWeights, setShowWeights] = useState(true);
   const { selectedAlgorithm, setSelectedAlgorithm } =
     useContext(AlgorithmContext)!;
 
@@ -98,7 +105,12 @@ const PathfindingVisualizer = () => {
       }
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, fillColor);
+      if (r === row && c === col) {
+        updateNodeColor(r, c, startColor);
+      } else {
+        updateNodeColor(r, c, fillColor);
+      }
+
       if (r + 1 < ROWS) {
         if (!visited.has(tupleToString([r + 1, c]))) {
           parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
@@ -206,11 +218,88 @@ const PathfindingVisualizer = () => {
     processNextPathNode(0);
   };
 
+  const dijkstras = (row: number, col: number) => {
+    const dist: number[][] = [];
+    for (let r = 0; r < ROWS; r++) {
+      let row: number[] = [];
+      for (let c = 0; c < COLS; c++) {
+        row.push(Infinity);
+      }
+      dist.push(row);
+    }
+    const parent = new Map<string, string>();
+    const heap = new Heap();
+    const visited = new Set();
+
+    parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
+    heap.insert([[row, col], 0]);
+    dist[row][col] = 0;
+    console.log(parent);
+
+    const processNextNode = () => {
+      if (heap.isEmpty()) {
+        return;
+      }
+
+      const [r, c] = heap.deleteMin()!;
+
+      if (grid[r][c].color === targetColor) {
+        // Target node found
+        tracePath(r, c, parent);
+        return;
+      }
+
+      const nodeKey = tupleToString([r, c]);
+      visited.add(nodeKey);
+
+      updateNodeColor(r, c, fillColor);
+      if (r + 1 < ROWS && !visited.has(tupleToString([r + 1, c]))) {
+        dist[r + 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r + 1][c]);
+        parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
+        if (heap.contains([r + 1, c])) {
+          heap.decreaseKey([r + 1, c], dist[r + 1][c]);
+        } else {
+          heap.insert([[r + 1, c], dist[r + 1][c]]);
+        }
+      }
+      if (r - 1 >= 0 && !visited.has(tupleToString([r - 1, c]))) {
+        dist[r - 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r - 1][c]);
+        parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
+        if (heap.contains([r - 1, c])) {
+          heap.decreaseKey([r - 1, c], dist[r - 1][c]);
+        } else {
+          heap.insert([[r - 1, c], dist[r - 1][c]]);
+        }
+      }
+      if (c + 1 < COLS && !visited.has(tupleToString([r, c + 1]))) {
+        dist[r][c + 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c + 1]);
+        parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
+        if (heap.contains([r, c + 1])) {
+          heap.decreaseKey([r, c + 1], dist[r][c + 1]);
+        } else {
+          heap.insert([[r, c + 1], dist[r][c + 1]]);
+        }
+      }
+      if (c - 1 >= 0 && !visited.has(tupleToString([r, c - 1]))) {
+        dist[r][c - 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c - 1]);
+        parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
+        if (heap.contains([r, c - 1])) {
+          heap.decreaseKey([r, c - 1], dist[r][c - 1]);
+        } else {
+          heap.insert([[r, c - 1], dist[r][c - 1]]);
+        }
+      }
+      setTimeout(processNextNode, fillTimeDelay);
+    };
+
+    processNextNode();
+  };
+
   /* FunctionMap for names to functions */
   const functionMap: FunctionMap = {};
   functionMap[visualizations[0]] = bfs;
   functionMap[visualizations[1]] = dfs;
-  functionMap[visualizations[2]] = bfs;
+  functionMap[visualizations[2]] = dijkstras;
 
   const handleNodeClick = (rowIdx: number, colIdx: number) => {
     if (isSettingTarget) {
