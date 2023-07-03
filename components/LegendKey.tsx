@@ -6,7 +6,6 @@ interface LegendKeyProps {
 }
 
 const LegendKey: FC<LegendKeyProps> = ({ color, label }) => {
-  console.log(color);
   return (
     <div className="flex flex-row">
       <div className={`w-[30px] h-[30px]`} style={{ backgroundColor: color }} />
