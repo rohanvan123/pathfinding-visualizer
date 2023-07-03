@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useRef, useState } from "react";
-import Queue from "../types/Queue";
+import React, { useContext, useEffect, useState } from "react";
 import { Tuple, FunctionMap } from "@/types/types";
 import {
   calcWeight,
@@ -12,24 +11,25 @@ import {
   stringToTuple,
   tupleToString,
 } from "@/utils/utils";
-import Stack from "@/types/Stack";
+import {
+  defaultColor,
+  fillColor,
+  pathColor,
+  targetColor,
+  startColor,
+} from "@/styles/colors";
 import AlgorithmContext from "@/context/AlgorithmContext";
 import { visualizations } from "@/data/visualizations";
+import Stack from "@/types/Stack";
+import Queue from "../types/Queue";
 import Heap from "@/types/Heap";
+import Legend from "./Legend";
 
 /* GRID SETTINGS */
 const MAX_TARGET_NODES = 1;
 const BOX_WIDTH = 40;
 const ROWS = 15;
 const COLS = 30;
-
-/* COLOR SETTINGS */
-const defaultColor = "white";
-const fillColor = "#50C878";
-const pathColor = "red";
-const startColor = "red";
-const targetColor = "yellow";
-const wallColor = "black";
 
 /* ANIMATION SETTINGS */
 const fillTimeDelay = 5;
@@ -76,6 +76,7 @@ const PathfindingVisualizer = () => {
     queue.enqueue([row, col]);
     const visited = new Set();
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
+    updateNodeColor(row, col, startColor);
 
     const processNextNode = () => {
       if (queue.isEmpty()) {
@@ -95,9 +96,7 @@ const PathfindingVisualizer = () => {
       }
       visited.add(nodeKey);
 
-      if (r === row && c === col) {
-        updateNodeColor(r, c, startColor);
-      } else {
+      if (r !== row || c !== col) {
         updateNodeColor(r, c, fillColor);
       }
 
@@ -137,6 +136,7 @@ const PathfindingVisualizer = () => {
     stack.push([row, col]);
     const visited = new Set();
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
+    updateNodeColor(row, col, startColor);
 
     const processNextNode = () => {
       if (stack.isEmpty()) {
@@ -156,7 +156,10 @@ const PathfindingVisualizer = () => {
       }
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, fillColor);
+      if (r !== row || c !== col) {
+        updateNodeColor(r, c, fillColor);
+      }
+
       if (c - 1 >= 0) {
         if (!visited.has(tupleToString([r, c - 1]))) {
           parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
@@ -195,7 +198,6 @@ const PathfindingVisualizer = () => {
       path.push([row, col]);
     }
     path.reverse();
-
     const processNextPathNode = (idx: number) => {
       if (idx < path.length) {
         const [r, c]: Tuple = path[idx];
@@ -205,7 +207,7 @@ const PathfindingVisualizer = () => {
         return;
       }
     };
-    processNextPathNode(0);
+    processNextPathNode(1);
   };
 
   const dijkstras = (row: number, col: number) => {
@@ -217,6 +219,7 @@ const PathfindingVisualizer = () => {
     const parent = new Map<string, string>();
     const heap = new Heap();
     const visited = new Set();
+    updateNodeColor(row, col, startColor);
 
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
     heap.insert([[row, col], 0]);
@@ -238,7 +241,10 @@ const PathfindingVisualizer = () => {
       const nodeKey = tupleToString([r, c]);
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, fillColor);
+      if (r !== row || c !== col) {
+        updateNodeColor(r, c, fillColor);
+      }
+
       if (r + 1 < ROWS && !visited.has(tupleToString([r + 1, c]))) {
         if (
           calcWeight(grid[r][c], grid[r + 1][c]) + dist[r][c] <
@@ -310,6 +316,8 @@ const PathfindingVisualizer = () => {
     const heap = new Heap();
     const visited = new Set();
 
+    updateNodeColor(targetNode[0], targetNode[1], targetColor);
+    updateNodeColor(row, col, startColor);
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
     heap.insert([[row, col], 0]);
     f_score[row][col] = 0;
@@ -334,10 +342,15 @@ const PathfindingVisualizer = () => {
       const nodeKey = tupleToString([r, c]);
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, fillColor);
+      if (r !== row || c !== col) {
+        updateNodeColor(r, c, fillColor);
+      }
+
       if (r + 1 < ROWS && !visited.has(tupleToString([r + 1, c]))) {
-        const tentative_g_score =
-          g_score[r][c] + calcWeight(grid[r][c], grid[r + 1][c]);
+        const edgeWeight = showWeights
+          ? calcWeight(grid[r][c], grid[r + 1][c])
+          : 1;
+        const tentative_g_score = g_score[r][c] + edgeWeight;
         if (tentative_g_score < g_score[r + 1][c]) {
           parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
           g_score[r + 1][c] = tentative_g_score;
@@ -351,8 +364,10 @@ const PathfindingVisualizer = () => {
         }
       }
       if (r - 1 >= 0 && !visited.has(tupleToString([r - 1, c]))) {
-        const tentative_g_score =
-          g_score[r][c] + calcWeight(grid[r][c], grid[r - 1][c]);
+        const edgeWeight = showWeights
+          ? calcWeight(grid[r][c], grid[r - 1][c])
+          : 1;
+        const tentative_g_score = g_score[r][c] + edgeWeight;
         if (tentative_g_score < g_score[r - 1][c]) {
           parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
           g_score[r - 1][c] = tentative_g_score;
@@ -366,8 +381,10 @@ const PathfindingVisualizer = () => {
         }
       }
       if (c + 1 < COLS && !visited.has(tupleToString([r, c + 1]))) {
-        const tentative_g_score =
-          g_score[r][c] + calcWeight(grid[r][c], grid[r][c + 1]);
+        const edgeWeight = showWeights
+          ? calcWeight(grid[r][c], grid[r][c + 1])
+          : 1;
+        const tentative_g_score = g_score[r][c] + edgeWeight;
         if (tentative_g_score < g_score[r][c + 1]) {
           parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
           g_score[r][c + 1] = tentative_g_score;
@@ -381,8 +398,10 @@ const PathfindingVisualizer = () => {
         }
       }
       if (c - 1 >= 0 && !visited.has(tupleToString([r, c - 1]))) {
-        const tentative_g_score =
-          g_score[r][c] + calcWeight(grid[r][c], grid[r][c - 1]);
+        const edgeWeight = showWeights
+          ? calcWeight(grid[r][c], grid[r][c - 1])
+          : 1;
+        const tentative_g_score = g_score[r][c] + edgeWeight;
         if (tentative_g_score < g_score[r][c - 1]) {
           parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
           g_score[r][c - 1] = tentative_g_score;
@@ -457,6 +476,7 @@ const PathfindingVisualizer = () => {
 
   return (
     <div className="flex flex-col justify-center items-center w-full  mt-[150px]">
+      <Legend />
       <div
         className={`m-auto w-[${BOX_WIDTH * COLS}px] h-[${
           BOX_WIDTH * ROWS
