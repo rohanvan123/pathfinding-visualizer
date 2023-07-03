@@ -1,4 +1,3 @@
-import { visualizations } from "@/data/visualizations";
 import React, { createContext } from "react";
 
 interface AlgorithmContextValue {

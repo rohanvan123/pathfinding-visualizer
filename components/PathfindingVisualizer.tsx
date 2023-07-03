@@ -2,10 +2,12 @@
 
 import React, { useContext, useEffect, useRef, useState } from "react";
 import Queue from "../types/Queue";
-import { Tuple, Node, FunctionMap } from "@/types/types";
+import { Tuple, FunctionMap } from "@/types/types";
 import {
   calcWeight,
   getRandomInt,
+  hueristicEstimate,
+  initalizeSSSP,
   intializeGrid,
   stringToTuple,
   tupleToString,
@@ -42,6 +44,7 @@ const PathfindingVisualizer = () => {
   const [grid, setGrid] = useState(intializeGrid(ROWS, COLS, defaultColor));
   const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
   const [isSettingTarget, setIsSettingTarget] = useState(false);
+  const [targetNode, setTargetNode] = useState<Tuple>([0, 0]);
   const [showWeights, setShowWeights] = useState(false);
   const { selectedAlgorithm, setSelectedAlgorithm } =
     useContext(AlgorithmContext)!;
@@ -56,6 +59,7 @@ const PathfindingVisualizer = () => {
       }
     }
     setCurrentTargetNodes(0);
+    setTargetNode([0, 0]);
   };
 
   const updateNodeColor = (row: number, col: number, color: string) => {
@@ -209,14 +213,7 @@ const PathfindingVisualizer = () => {
       return bfs(row, col);
     }
 
-    const dist: number[][] = [];
-    for (let r = 0; r < ROWS; r++) {
-      let row: number[] = [];
-      for (let c = 0; c < COLS; c++) {
-        row.push(Infinity);
-      }
-      dist.push(row);
-    }
+    const dist: number[][] = initalizeSSSP(ROWS, COLS);
     const parent = new Map<string, string>();
     const heap = new Heap();
     const visited = new Set();
@@ -304,17 +301,119 @@ const PathfindingVisualizer = () => {
     processNextNode();
   };
 
+  /* hueristic is defied by the manhattan distance */
+
+  const Astar = (row: number, col: number) => {
+    const g_score = initalizeSSSP(ROWS, COLS);
+    const f_score = initalizeSSSP(ROWS, COLS);
+    const parent = new Map<string, string>();
+    const heap = new Heap();
+    const visited = new Set();
+
+    parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
+    heap.insert([[row, col], 0]);
+    f_score[row][col] = 0;
+    g_score[row][col] = hueristicEstimate(
+      grid[row][col],
+      grid[targetNode[0]][targetNode[1]]
+    );
+
+    const processNextNode = () => {
+      if (heap.isEmpty()) {
+        return;
+      }
+
+      const [r, c] = heap.deleteMin()!;
+
+      if (tupleToString([r, c]) === tupleToString(targetNode)) {
+        // Target node found
+        tracePath(r, c, parent);
+        return;
+      }
+
+      const nodeKey = tupleToString([r, c]);
+      visited.add(nodeKey);
+
+      updateNodeColor(r, c, fillColor);
+      if (r + 1 < ROWS && !visited.has(tupleToString([r + 1, c]))) {
+        const tentative_g_score =
+          g_score[r][c] + calcWeight(grid[r][c], grid[r + 1][c]);
+        if (tentative_g_score < g_score[r + 1][c]) {
+          parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
+          g_score[r + 1][c] = tentative_g_score;
+          f_score[r + 1][c] =
+            g_score[r + 1][c] + hueristicEstimate(grid[r + 1][c], grid[0][0]);
+          if (heap.contains([r + 1, c])) {
+            heap.decreaseKey([r + 1, c], f_score[r + 1][c]);
+          } else {
+            heap.insert([[r + 1, c], f_score[r + 1][c]]);
+          }
+        }
+      }
+      if (r - 1 >= 0 && !visited.has(tupleToString([r - 1, c]))) {
+        const tentative_g_score =
+          g_score[r][c] + calcWeight(grid[r][c], grid[r - 1][c]);
+        if (tentative_g_score < g_score[r - 1][c]) {
+          parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
+          g_score[r - 1][c] = tentative_g_score;
+          f_score[r - 1][c] =
+            g_score[r - 1][c] + hueristicEstimate(grid[r - 1][c], grid[0][0]);
+          if (heap.contains([r - 1, c])) {
+            heap.decreaseKey([r - 1, c], f_score[r - 1][c]);
+          } else {
+            heap.insert([[r - 1, c], f_score[r - 1][c]]);
+          }
+        }
+      }
+      if (c + 1 < COLS && !visited.has(tupleToString([r, c + 1]))) {
+        const tentative_g_score =
+          g_score[r][c] + calcWeight(grid[r][c], grid[r][c + 1]);
+        if (tentative_g_score < g_score[r][c + 1]) {
+          parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
+          g_score[r][c + 1] = tentative_g_score;
+          f_score[r][c + 1] =
+            g_score[r][c + 1] + hueristicEstimate(grid[r][c + 1], grid[0][0]);
+          if (heap.contains([r, c + 1])) {
+            heap.decreaseKey([r, c + 1], f_score[r][c + 1]);
+          } else {
+            heap.insert([[r, c + 1], f_score[r][c + 1]]);
+          }
+        }
+      }
+      if (c - 1 >= 0 && !visited.has(tupleToString([r, c - 1]))) {
+        const tentative_g_score =
+          g_score[r][c] + calcWeight(grid[r][c], grid[r][c - 1]);
+        if (tentative_g_score < g_score[r][c - 1]) {
+          parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
+          g_score[r][c - 1] = tentative_g_score;
+          f_score[r][c - 1] =
+            g_score[r][c - 1] + hueristicEstimate(grid[r][c - 1], grid[0][0]);
+          if (heap.contains([r, c - 1])) {
+            heap.decreaseKey([r, c - 1], f_score[r][c - 1]);
+          } else {
+            heap.insert([[r, c - 1], f_score[r][c - 1]]);
+          }
+        }
+      }
+      setTimeout(processNextNode, fillTimeDelay);
+    };
+
+    processNextNode();
+  };
+
   /* FunctionMap for names to functions */
   const functionMap: FunctionMap = {};
   functionMap[visualizations[0]] = bfs;
   functionMap[visualizations[1]] = dfs;
   functionMap[visualizations[2]] = dijkstras;
+  functionMap[visualizations[3]] = Astar;
 
   const handleNodeClick = (rowIdx: number, colIdx: number) => {
     if (isSettingTarget) {
       if (currentTargetNodes < MAX_TARGET_NODES) {
         updateNodeColor(rowIdx, colIdx, targetColor);
         setCurrentTargetNodes(currentTargetNodes + 1);
+        setTargetNode([rowIdx, colIdx]);
       }
     } else {
       functionMap[selectedAlgorithm](rowIdx, colIdx);
@@ -325,8 +424,9 @@ const PathfindingVisualizer = () => {
     if (currentTargetNodes === MAX_TARGET_NODES) {
       setIsSettingTarget(false);
       return;
+    } else {
+      setIsSettingTarget(true);
     }
-    setIsSettingTarget(true);
   };
 
   useEffect(() => {
@@ -367,7 +467,7 @@ const PathfindingVisualizer = () => {
           return row.map((node, colIdx) => (
             <button
               key={`${rowIdx}-${colIdx}`}
-              className={`h-[${BOX_WIDTH}px] w-[${BOX_WIDTH}px] border-blue-100 border-[.5px] border-solid p-[0px]`}
+              className={`h-[40px] w-[${BOX_WIDTH}px] border-blue-100 border-[.5px] border-solid p-[0px]`}
               style={{ backgroundColor: node.color }}
               onClick={() => {
                 handleNodeClick(rowIdx, colIdx);

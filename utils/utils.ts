@@ -22,6 +22,10 @@ export const calcWeight = (source: Node, dest: Node) => {
   return Math.abs(source.weight - dest.weight);
 };
 
+export const hueristicEstimate = (source: Node, dest: Node) => {
+  return Math.abs(dest.col - source.col) + Math.abs(dest.row - source.row);
+};
+
 export const intializeGrid = (
   maxRows: number,
   maxCols: number,
@@ -44,4 +48,16 @@ export const intializeGrid = (
   }
 
   return initialGrid;
+};
+
+export const initalizeSSSP = (maxRows: number, maxCols: number) => {
+  const dist: number[][] = [];
+  for (let r = 0; r < maxRows; r++) {
+    let row: number[] = [];
+    for (let c = 0; c < maxCols; c++) {
+      row.push(Infinity);
+    }
+    dist.push(row);
+  }
+  return dist;
 };
