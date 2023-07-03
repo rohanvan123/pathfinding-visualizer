@@ -8,6 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        defaultColor: "white",
         fillColor: "#50C878",
         pathColor: "red",
         targetColor: "yellow"

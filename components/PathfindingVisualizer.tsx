@@ -1,15 +1,31 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Queue from "../types/Queue";
-import { Tuple, Node } from "@/types/types";
-import { stringToTuple, tupleToString } from "@/utils/utils";
+import { Tuple, Node, FunctionMap } from "@/types/types";
+import { getRandomInt, stringToTuple, tupleToString } from "@/utils/utils";
 import Stack from "@/types/Stack";
+import AlgorithmContext from "@/context/AlgorithmContext";
+import { visualizations } from "@/data/visualizations";
 
+/* GRID SETTINGS */
 const MAX_TARGET_NODES = 1;
 const BOX_WIDTH = 40;
 const ROWS = 15;
 const COLS = 30;
+
+/* COLOR SETTINGS */
+const defaultColor = "white";
+const fillColor = "#50C878";
+const pathColor = "red";
+const targetColor = "yellow";
+const wallColor = "black";
+
+/* ANIMATION SETTINGS */
+const fillTimeDelay = 5;
+const pathTimeDelay = 30;
+const minWeight = 0;
+const maxWeight = 10;
 
 const intializeGrid = (maxRows: number, maxCols: number) => {
   let initialGrid: Node[][] = [];
@@ -20,7 +36,8 @@ const intializeGrid = (maxRows: number, maxCols: number) => {
       const n: Node = {
         row: r,
         col: c,
-        color: "white",
+        color: defaultColor,
+        weight: 0,
       };
       row.push(n);
     }
@@ -31,18 +48,22 @@ const intializeGrid = (maxRows: number, maxCols: number) => {
 };
 
 const PathfindingVisualizer = () => {
+  const [grid, setGrid] = useState(intializeGrid(ROWS, COLS));
+  const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
+  const [isSettingTarget, setIsSettingTarget] = useState(false);
+  const [showWeights, setShowWeights] = useState(false);
+  const { selectedAlgorithm, setSelectedAlgorithm } =
+    useContext(AlgorithmContext)!;
+
   const resetGrid = () => {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        updateNodeColor(r, c, "white");
+        updateNodeColor(r, c, defaultColor);
+        grid[r][c].weight = getRandomInt(minWeight, maxWeight);
       }
     }
     setCurrentTargetNodes(0);
   };
-
-  const [grid, setGrid] = useState(intializeGrid(ROWS, COLS));
-  const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
-  const [isSettingTarget, setIsSettingTarget] = useState(false);
 
   const updateNodeColor = (row: number, col: number, color: string) => {
     setGrid((prevGrid) => {
@@ -65,20 +86,19 @@ const PathfindingVisualizer = () => {
       }
 
       const [r, c] = queue.dequeue()!;
-      console.log([r, c]);
 
       const nodeKey = JSON.stringify([r, c]);
       if (visited.has(nodeKey)) {
         processNextNode();
         return;
-      } else if (grid[r][c].color === "yellow") {
+      } else if (grid[r][c].color === targetColor) {
         // Target node found
         tracePath(r, c, parent);
         return;
       }
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, "#50C878");
+      updateNodeColor(r, c, fillColor);
       if (r + 1 < ROWS) {
         if (!visited.has(tupleToString([r + 1, c]))) {
           parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
@@ -103,7 +123,7 @@ const PathfindingVisualizer = () => {
         }
         queue.enqueue([r, c - 1]);
       }
-      setTimeout(processNextNode, 5);
+      setTimeout(processNextNode, fillTimeDelay);
     };
 
     processNextNode();
@@ -122,20 +142,19 @@ const PathfindingVisualizer = () => {
       }
 
       const [r, c] = stack.pop()!;
-      console.log([r, c]);
 
       const nodeKey = JSON.stringify([r, c]);
       if (visited.has(nodeKey)) {
         processNextNode();
         return;
-      } else if (grid[r][c].color === "yellow") {
+      } else if (grid[r][c].color === targetColor) {
         // Target node found
         tracePath(r, c, parent);
         return;
       }
       visited.add(nodeKey);
 
-      updateNodeColor(r, c, "#50C878");
+      updateNodeColor(r, c, fillColor);
       if (c - 1 >= 0) {
         if (!visited.has(tupleToString([r, c - 1]))) {
           parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
@@ -161,7 +180,7 @@ const PathfindingVisualizer = () => {
         stack.push([r - 1, c]);
       }
 
-      setTimeout(processNextNode, 5);
+      setTimeout(processNextNode, fillTimeDelay);
     };
 
     processNextNode();
@@ -178,8 +197,8 @@ const PathfindingVisualizer = () => {
     const processNextPathNode = (idx: number) => {
       if (idx < path.length) {
         const [r, c]: Tuple = path[idx];
-        updateNodeColor(r, c, "red");
-        setTimeout(() => processNextPathNode(idx + 1), 30);
+        updateNodeColor(r, c, pathColor);
+        setTimeout(() => processNextPathNode(idx + 1), pathTimeDelay);
       } else {
         return;
       }
@@ -187,14 +206,20 @@ const PathfindingVisualizer = () => {
     processNextPathNode(0);
   };
 
+  /* FunctionMap for names to functions */
+  const functionMap: FunctionMap = {};
+  functionMap[visualizations[0]] = bfs;
+  functionMap[visualizations[1]] = dfs;
+  functionMap[visualizations[2]] = bfs;
+
   const handleNodeClick = (rowIdx: number, colIdx: number) => {
     if (isSettingTarget) {
       if (currentTargetNodes < MAX_TARGET_NODES) {
-        updateNodeColor(rowIdx, colIdx, "yellow");
+        updateNodeColor(rowIdx, colIdx, targetColor);
         setCurrentTargetNodes(currentTargetNodes + 1);
       }
     } else {
-      dfs(rowIdx, colIdx);
+      functionMap[selectedAlgorithm](rowIdx, colIdx);
     }
   };
 
@@ -211,6 +236,21 @@ const PathfindingVisualizer = () => {
       setIsSettingTarget(false);
     }
   }, [currentTargetNodes]);
+
+  /* Needed for server side rendering */
+  useEffect(() => {
+    const randomizeWeights = () => {
+      const updatedGrid = grid.map((row) =>
+        row.map((node) => ({
+          ...node,
+          weight: getRandomInt(minWeight, maxWeight),
+        }))
+      );
+      setGrid(updatedGrid);
+    };
+
+    randomizeWeights();
+  }, []);
 
   return (
     <div className="flex flex-col justify-center items-center w-full pt-[200px] pb-[100px] bg-gradient-to-b from-green-200 to-blue-300">
@@ -229,7 +269,9 @@ const PathfindingVisualizer = () => {
               onClick={() => {
                 handleNodeClick(rowIdx, colIdx);
               }}
-            ></button>
+            >
+              {showWeights ? node.weight : ""}
+            </button>
           ));
         })}
       </div>

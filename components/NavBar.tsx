@@ -1,24 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import AlgorithmContext from "@/context/AlgorithmContext";
+import { visualizations } from "@/data/visualizations";
+import React, { useContext, useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
-
-const visualizations = [
-  "Breadth First Search",
-  "Depth First Search",
-  "Dijkstra's",
-];
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(visualizations[0]);
+  const { selectedAlgorithm, setSelectedAlgorithm } =
+    useContext(AlgorithmContext)!;
 
   const handleTogleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
   const handleOptionSelect = (option: string) => {
-    setSelectedOption(option);
+    setSelectedAlgorithm(option);
     setIsOpen(false);
   };
 
@@ -52,7 +49,7 @@ const NavBar = () => {
                   <button
                     type="button"
                     className={`hover:bg-green-600 text-left h-[50px] w-full rounded-[8px] ${
-                      selectedOption === visualizations[idx]
+                      selectedAlgorithm === visualizations[idx]
                         ? "bg-green-600"
                         : ""
                     }`}
