@@ -15,11 +15,3 @@
     --background-end-rgb: 0, 0, 0;
   }
 }
-
-.dropdown-icon {
-  transition: transform 0.3s ease-in-out;
-}
-
-.dropdown-icon.rotated {
-  transform: rotate(180deg);
-}

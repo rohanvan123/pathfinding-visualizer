@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Queue from "../types/Queue";
 import { Tuple, Node, FunctionMap } from "@/types/types";
 import {
   calcWeight,
   getRandomInt,
+  intializeGrid,
   stringToTuple,
   tupleToString,
 } from "@/utils/utils";
@@ -18,7 +19,7 @@ import Heap from "@/types/Heap";
 const MAX_TARGET_NODES = 1;
 const BOX_WIDTH = 40;
 const ROWS = 15;
-const COLS = 40;
+const COLS = 30;
 
 /* COLOR SETTINGS */
 const defaultColor = "white";
@@ -32,33 +33,16 @@ const wallColor = "black";
 const fillTimeDelay = 5;
 const pathTimeDelay = 30;
 const minWeight = 0;
-const maxWeight = 100;
+const maxWeight = 10;
 
-const intializeGrid = (maxRows: number, maxCols: number) => {
-  let initialGrid: Node[][] = [];
-
-  for (let r = 0; r < maxRows; r++) {
-    let row: Node[] = [];
-    for (let c = 0; c < maxCols; c++) {
-      const n: Node = {
-        row: r,
-        col: c,
-        color: defaultColor,
-        weight: 0,
-      };
-      row.push(n);
-    }
-    initialGrid.push(row);
-  }
-
-  return initialGrid;
-};
+const defaultButtonStyle =
+  "mt-[50px] h-[50px] w-[150px] text-center border-[#50C878] border-[5px] rounded-[8px] hover:bg-[#50C878] text-white setting-button";
 
 const PathfindingVisualizer = () => {
-  const [grid, setGrid] = useState(intializeGrid(ROWS, COLS));
+  const [grid, setGrid] = useState(intializeGrid(ROWS, COLS, defaultColor));
   const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
   const [isSettingTarget, setIsSettingTarget] = useState(false);
-  const [showWeights, setShowWeights] = useState(true);
+  const [showWeights, setShowWeights] = useState(false);
   const { selectedAlgorithm, setSelectedAlgorithm } =
     useContext(AlgorithmContext)!;
 
@@ -66,7 +50,9 @@ const PathfindingVisualizer = () => {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         updateNodeColor(r, c, defaultColor);
-        grid[r][c].weight = getRandomInt(minWeight, maxWeight);
+        grid[r][c].weight = showWeights
+          ? getRandomInt(minWeight, maxWeight)
+          : 0;
       }
     }
     setCurrentTargetNodes(0);
@@ -219,6 +205,10 @@ const PathfindingVisualizer = () => {
   };
 
   const dijkstras = (row: number, col: number) => {
+    if (!showWeights) {
+      return bfs(row, col);
+    }
+
     const dist: number[][] = [];
     for (let r = 0; r < ROWS; r++) {
       let row: number[] = [];
@@ -234,7 +224,6 @@ const PathfindingVisualizer = () => {
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
     heap.insert([[row, col], 0]);
     dist[row][col] = 0;
-    console.log(parent);
 
     const processNextNode = () => {
       if (heap.isEmpty()) {
@@ -254,8 +243,13 @@ const PathfindingVisualizer = () => {
 
       updateNodeColor(r, c, fillColor);
       if (r + 1 < ROWS && !visited.has(tupleToString([r + 1, c]))) {
-        dist[r + 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r + 1][c]);
-        parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
+        if (
+          calcWeight(grid[r][c], grid[r + 1][c]) + dist[r][c] <
+          dist[r + 1][c]
+        ) {
+          dist[r + 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r + 1][c]);
+          parent.set(tupleToString([r + 1, c]), tupleToString([r, c]));
+        }
         if (heap.contains([r + 1, c])) {
           heap.decreaseKey([r + 1, c], dist[r + 1][c]);
         } else {
@@ -263,8 +257,13 @@ const PathfindingVisualizer = () => {
         }
       }
       if (r - 1 >= 0 && !visited.has(tupleToString([r - 1, c]))) {
-        dist[r - 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r - 1][c]);
-        parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
+        if (
+          calcWeight(grid[r][c], grid[r - 1][c]) + dist[r][c] <
+          dist[r - 1][c]
+        ) {
+          dist[r - 1][c] = dist[r][c] + calcWeight(grid[r][c], grid[r - 1][c]);
+          parent.set(tupleToString([r - 1, c]), tupleToString([r, c]));
+        }
         if (heap.contains([r - 1, c])) {
           heap.decreaseKey([r - 1, c], dist[r - 1][c]);
         } else {
@@ -272,8 +271,13 @@ const PathfindingVisualizer = () => {
         }
       }
       if (c + 1 < COLS && !visited.has(tupleToString([r, c + 1]))) {
-        dist[r][c + 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c + 1]);
-        parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
+        if (
+          calcWeight(grid[r][c], grid[r][c + 1]) + dist[r][c] <
+          dist[r][c + 1]
+        ) {
+          dist[r][c + 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c + 1]);
+          parent.set(tupleToString([r, c + 1]), tupleToString([r, c]));
+        }
         if (heap.contains([r, c + 1])) {
           heap.decreaseKey([r, c + 1], dist[r][c + 1]);
         } else {
@@ -281,8 +285,13 @@ const PathfindingVisualizer = () => {
         }
       }
       if (c - 1 >= 0 && !visited.has(tupleToString([r, c - 1]))) {
-        dist[r][c - 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c - 1]);
-        parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
+        if (
+          calcWeight(grid[r][c], grid[r][c - 1]) + dist[r][c] <
+          dist[r][c - 1]
+        ) {
+          dist[r][c - 1] = dist[r][c] + calcWeight(grid[r][c], grid[r][c - 1]);
+          parent.set(tupleToString([r, c - 1]), tupleToString([r, c]));
+        }
         if (heap.contains([r, c - 1])) {
           heap.decreaseKey([r, c - 1], dist[r][c - 1]);
         } else {
@@ -326,23 +335,28 @@ const PathfindingVisualizer = () => {
     }
   }, [currentTargetNodes]);
 
-  /* Needed for server side rendering */
-  useEffect(() => {
-    const randomizeWeights = () => {
-      const updatedGrid = grid.map((row) =>
-        row.map((node) => ({
-          ...node,
-          weight: getRandomInt(minWeight, maxWeight),
-        }))
-      );
-      setGrid(updatedGrid);
-    };
+  const randomizeWeights = () => {
+    const updatedGrid = grid.map((row) =>
+      row.map((node) => ({
+        ...node,
+        weight: getRandomInt(minWeight, maxWeight),
+      }))
+    );
+    setGrid(updatedGrid);
+  };
 
-    randomizeWeights();
-  }, []);
+  const generateWeights = () => {
+    if (showWeights) {
+      setShowWeights(false);
+      resetGrid();
+    } else {
+      setShowWeights(true);
+      randomizeWeights();
+    }
+  };
 
   return (
-    <div className="flex flex-col justify-center items-center w-full pt-[200px] pb-[100px] bg-gradient-to-b from-green-200 to-blue-300">
+    <div className="flex flex-col justify-center items-center w-full  mt-[150px]">
       <div
         className={`m-auto w-[${BOX_WIDTH * COLS}px] h-[${
           BOX_WIDTH * ROWS
@@ -353,7 +367,7 @@ const PathfindingVisualizer = () => {
           return row.map((node, colIdx) => (
             <button
               key={`${rowIdx}-${colIdx}`}
-              className={`h-[${BOX_WIDTH}px] w-[${BOX_WIDTH}px] border-black border-[1px] border-solid p-[0px]`}
+              className={`h-[${BOX_WIDTH}px] w-[${BOX_WIDTH}px] border-blue-100 border-[.5px] border-solid p-[0px]`}
               style={{ backgroundColor: node.color }}
               onClick={() => {
                 handleNodeClick(rowIdx, colIdx);
@@ -366,19 +380,24 @@ const PathfindingVisualizer = () => {
       </div>
       <div className="flex flex-row gap-[20px]">
         <button
-          className="mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300 bg-white"
-          onClick={resetGrid}
-        >
-          Reset
-        </button>
-        <button
-          className={`bg-white mt-[50px] h-[40px] w-[100px] text-center border-black border-[1px] rounded-[8px] hover:bg-slate-300 ${
-            isSettingTarget ? "bg-slate-300" : ""
+          className={`${defaultButtonStyle} ${
+            isSettingTarget ? "bg-green-[#50C878]" : ""
           }`}
           onClick={handleTargetButtonClick}
           disabled={currentTargetNodes === MAX_TARGET_NODES}
         >
           Set Target
+        </button>
+        <button className={defaultButtonStyle} onClick={resetGrid}>
+          Reset
+        </button>
+        <button
+          className={`${defaultButtonStyle} ${
+            showWeights ? "bg-green-[#50C878]" : ""
+          }`}
+          onClick={generateWeights}
+        >
+          Show Weights
         </button>
       </div>
     </div>
