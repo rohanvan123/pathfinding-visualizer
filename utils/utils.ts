@@ -23,7 +23,14 @@ export const calcWeight = (source: Node, dest: Node) => {
 };
 
 export const hueristicEstimate = (source: Node, dest: Node) => {
-  return Math.abs(dest.col - source.col) + Math.abs(dest.row - source.row);
+  const dx = Math.abs(dest.row - source.row);
+  const dy = Math.abs(dest.col - source.col);
+  const diagonalMoves = Math.min(dx, dy);
+  const straightMoves = Math.abs(dx - dy);
+  const diagonalCost = Math.sqrt(2); // Cost of diagonal movement (assumed square grid)
+  const straightCost = 1; // Cost of horizontal or vertical movement
+
+  return diagonalCost * diagonalMoves + straightCost * straightMoves;
 };
 
 export const intializeGrid = (

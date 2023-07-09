@@ -29,7 +29,7 @@ const NavBar = () => {
       </div>
       <div className="relative inline-block w-[180px] text-[15px]">
         <button
-          className="h-[100px] w-full rounded-[8px] text-white text-[17px] bg-green-700 text-left"
+          className="h-[100px] w-full rounded-t-[8px] text-white text-[17px] bg-green-700 text-left"
           onClick={handleTogleDropdown}
         >
           <div className="flex flex-row justify-between ">

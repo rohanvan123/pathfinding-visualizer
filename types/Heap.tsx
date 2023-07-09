@@ -41,7 +41,8 @@ class Heap {
     const nodeKey = tupleToString(node);
     for (let i = 0; i < this.heap.length; i++) {
       if (tupleToString(this.heap[i][0]) === nodeKey) {
-        this.heap[i][1] = newKey;
+        const updatedItem: HeapItem = [this.heap[i][0], newKey];
+        this.heap[i] = updatedItem;
         this.heapifyUp(i);
         break;
       }
@@ -74,7 +75,7 @@ class Heap {
 
   heapifyUp(currentIndex: number) {
     while (currentIndex > 0) {
-      let parentIndex = currentIndex - 1; // 2;
+      let parentIndex = Math.floor((currentIndex - 1) / 2);
 
       if (this.heap[parentIndex][1] > this.heap[currentIndex][1]) {
         // Swap the parent and the child
