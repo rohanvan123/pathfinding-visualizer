@@ -1,3 +1,5 @@
+"use client";
+
 import { TutorialSlide } from "@/types/types";
 import React, { FC, useState } from "react";
 import { GrNext, GrPrevious } from "react-icons/gr";
@@ -22,12 +24,12 @@ const Tutorial: FC<TutorialProps> = ({ handleClick, slides }) => {
         {slides[slideIdx].img !== "" ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            className={slides[slideIdx].imgStyling}
+            className="w-[250px] h-[250px]"
             src={slides[slideIdx].img}
             alt=""
           />
         ) : (
-          <div className={slides[slideIdx].contentStyling}>
+          <div className="whitespace-pre-line mt-[20px] w-[80%] leading-[2] text-[15px]">
             <BoldText text={slides[slideIdx].content} />
           </div>
         )}
