@@ -15,3 +15,44 @@
     --background-end-rgb: 0, 0, 0;
   }
 }
+
+@keyframes rotate-down {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes rotate-up {
+  0% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.dropdown-toggle {
+  transition: transform 0.3s ease-in-out;
+}
+
+.dropdown-toggle.open {
+  animation: rotate-down 0.3s forwards;
+}
+
+.dropdown-toggle.close {
+  animation: rotate-up 0.3s forwards;
+}
+
+.tutorial-buttons {
+  position: absolute;
+  left: 50%;
+  margin-top: 200px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 730px;
+}

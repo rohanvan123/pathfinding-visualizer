@@ -21,22 +21,22 @@ const NavBar = () => {
 
   return (
     <div
-      className="w-full h-[100px] flex flex-row justify-evenly gap-[60%] items-center border-b-[3px] 
+      className="w-full h-[80px] flex flex-row justify-items-end gap-[50px] items-center 
     border-green-700 bg-green-500 fixed top-0 z-50"
     >
-      <div className="text-[30px] [text-shadow:_4px_4px_0_rgb(0_0_0_/_15%)] text-white">
+      <div className="text-[30px] [text-shadow:_4px_4px_0_rgb(0_0_0_/_15%)] text-white ml-[50px]">
         Path Algorithms Visualizer
       </div>
       <div className="relative inline-block w-[180px] text-[15px]">
         <button
-          className="h-[100px] w-full rounded-t-[8px] text-white text-[17px] bg-green-700 text-left"
+          className="h-[80px] w-full text-white text-[17px] bg-green-700 text-left"
           onClick={handleTogleDropdown}
         >
           <div className="flex flex-row justify-between ">
-            <span className="ml-[10px]">Algorithm</span>
+            <span className="ml-[10px] text-[20px]">Algorithm</span>
             <FaChevronDown
-              className={`mt-[5px] mr-[10px] dropdown-icon ${
-                isOpen ? "rotated" : ""
+              className={`mt-[5px] mr-[10px] dropdown-toggle ${
+                isOpen ? "open" : "close"
               }`}
             />
           </div>

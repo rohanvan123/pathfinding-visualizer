@@ -6,6 +6,7 @@ import {
   pathColor,
   startColor,
   targetColor,
+  wallColor,
 } from "@/styles/colors";
 
 const Legend = () => {
@@ -16,6 +17,7 @@ const Legend = () => {
       <LegendKey color={startColor} label="Start" />
       <LegendKey color={targetColor} label="Target" />
       <LegendKey color={pathColor} label="Path" />
+      <LegendKey color={wallColor} label="Wall" />
     </div>
   );
 };

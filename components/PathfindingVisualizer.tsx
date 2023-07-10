@@ -28,12 +28,12 @@ import Legend from "./Legend";
 
 /* GRID SETTINGS */
 const MAX_TARGET_NODES = 1;
-const BOX_WIDTH = 40;
+const BOX_WIDTH = 32;
 const ROWS = 15;
-const COLS = 30;
+const COLS = 40;
 
 /* ANIMATION SETTINGS */
-const fillTimeDelay = 5;
+const fillTimeDelay = 4;
 const pathTimeDelay = 30;
 const minWeight = 0;
 const maxWeight = 10;
@@ -187,25 +187,6 @@ const PathfindingVisualizer = () => {
     processNextNode();
   };
 
-  const tracePath = (row: number, col: number, parent: Map<string, string>) => {
-    const path: Tuple[] = [];
-    while (parent.get(tupleToString([row, col])) !== tupleToString([-1, -1])) {
-      [row, col] = stringToTuple(parent.get(tupleToString([row, col]))!);
-      path.push([row, col]);
-    }
-    path.reverse();
-    const processNextPathNode = (idx: number) => {
-      if (idx < path.length) {
-        const [r, c]: Tuple = path[idx];
-        updateNodeColor(r, c, pathColor);
-        setTimeout(() => processNextPathNode(idx + 1), pathTimeDelay);
-      } else {
-        return;
-      }
-    };
-    processNextPathNode(1);
-  };
-
   const dijkstras = (row: number, col: number) => {
     if (!showWeights) return bfs(row, col);
 
@@ -350,6 +331,25 @@ const PathfindingVisualizer = () => {
     processNextNode();
   };
 
+  const tracePath = (row: number, col: number, parent: Map<string, string>) => {
+    const path: Tuple[] = [];
+    while (parent.get(tupleToString([row, col])) !== tupleToString([-1, -1])) {
+      [row, col] = stringToTuple(parent.get(tupleToString([row, col]))!);
+      path.push([row, col]);
+    }
+    path.reverse();
+    const processNextPathNode = (idx: number) => {
+      if (idx < path.length) {
+        const [r, c]: Tuple = path[idx];
+        updateNodeColor(r, c, pathColor);
+        setTimeout(() => processNextPathNode(idx + 1), pathTimeDelay);
+      } else {
+        return;
+      }
+    };
+    processNextPathNode(1);
+  };
+
   /* FunctionMap for names to functions */
   const functionMap: FunctionMap = {};
   functionMap[visualizations[0]] = bfs;
@@ -419,7 +419,7 @@ const PathfindingVisualizer = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-full  mt-[150px]">
+    <div className="flex flex-col justify-center items-center w-full  mt-[120px]">
       <Legend />
       <div
         className={`m-auto w-[${BOX_WIDTH * COLS}px] h-[${
@@ -431,7 +431,7 @@ const PathfindingVisualizer = () => {
           return row.map((node, colIdx) => (
             <button
               key={`${rowIdx}-${colIdx}`}
-              className={`h-[40px] w-[${BOX_WIDTH}px] border-blue-100 border-[.5px] border-solid p-[0px]`}
+              className={`h-[32px] w-[${BOX_WIDTH}px] border-blue-100 border-[.5px] border-solid p-[0px]`}
               style={{ backgroundColor: node.color }}
               onClick={() => {
                 handleNodeClick(rowIdx, colIdx);
@@ -442,7 +442,7 @@ const PathfindingVisualizer = () => {
           ));
         })}
       </div>
-      <div className="flex flex-row gap-[20px]">
+      <div className="flex flex-row gap-[20px] pb-[50px]">
         <button
           className={`${defaultButtonStyle} ${
             isSettingTarget ? "bg-[#50C878]" : ""
