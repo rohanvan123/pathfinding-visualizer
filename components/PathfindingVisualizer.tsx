@@ -54,6 +54,7 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
   const [targetNode, setTargetNode] = useState<Tuple>([0, 0]);
   const [showWeights, setShowWeights] = useState(false);
   const [isPlacingWalls, setIsPlacingWalls] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const { selectedAlgorithm, setSelectedAlgorithm } =
     useContext(AlgorithmContext)!;
 
@@ -134,7 +135,9 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
     processNextNode();
   };
 
-  const dfs = (row: number, col: number) => {
+  const dfs = async (row: number, col: number) => {
+    setIsAnimating(true);
+
     const parent = new Map<string, string>();
     const stack = new Stack();
     stack.push([row, col]);
@@ -142,21 +145,16 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
     parent.set(tupleToString([row, col]), tupleToString([-1, -1]));
     updateNodeColor(row, col, startColor);
 
-    const processNextNode = () => {
-      if (stack.isEmpty()) {
-        return;
-      }
-
+    while (!stack.isEmpty()) {
       const [r, c] = stack.pop()!;
 
       const nodeKey = JSON.stringify([r, c]);
       if (visited.has(nodeKey)) {
-        processNextNode();
-        return;
+        continue;
       } else if (grid[r][c].color === targetColor) {
         // Target node found
         tracePath(r, c, parent);
-        return;
+        break;
       }
       visited.add(nodeKey);
 
@@ -187,10 +185,8 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
         processNeighbor(r - 1, c);
       }
 
-      setTimeout(processNextNode, fillTimeDelay);
-    };
-
-    processNextNode();
+      await new Promise((resolve) => setTimeout(resolve, fillTimeDelay));
+    }
   };
 
   const dijkstras = (row: number, col: number) => {
@@ -377,7 +373,17 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
         grid[rowIdx][colIdx].color == defaultColor ? wallColor : defaultColor
       );
     } else {
-      functionMap[selectedAlgorithm](rowIdx, colIdx);
+      if (!isAnimating) {
+        functionMap[selectedAlgorithm](rowIdx, colIdx)
+          .then(() => {
+            setIsAnimating(false);
+          })
+          .catch((error: any) => {
+            console.error("Error occurred:", error);
+          });
+      } else {
+        return;
+      }
     }
   };
 
@@ -454,7 +460,7 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
             isSettingTarget ? "bg-[#50C878]" : ""
           }`}
           onClick={handleTargetButtonClick}
-          disabled={currentTargetNodes === MAX_TARGET_NODES}
+          disabled={currentTargetNodes === MAX_TARGET_NODES || isAnimating}
         >
           Set Target
         </button>
@@ -463,10 +469,15 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
             showWeights ? "bg-[#50C878]" : ""
           }`}
           onClick={generateWeights}
+          disabled={isAnimating}
         >
           Show Weights
         </button>
-        <button className={defaultButtonStyle} onClick={resetGrid}>
+        <button
+          className={defaultButtonStyle}
+          onClick={resetGrid}
+          disabled={isAnimating}
+        >
           Reset
         </button>
         <button
@@ -474,14 +485,14 @@ const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
             isPlacingWalls ? "bg-[#50C878]" : ""
           }`}
           onClick={handlePlaceWallClick}
+          disabled={isAnimating}
         >
           Place Walls
         </button>
         <button
-          className={`${defaultButtonStyle} ${
-            isPlacingWalls ? "bg-[#50C878]" : ""
-          }`}
+          className={defaultButtonStyle}
           onClick={setShowTutorial}
+          disabled={isAnimating}
         >
           Open Tutorial
         </button>
