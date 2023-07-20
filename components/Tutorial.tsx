@@ -36,15 +36,15 @@ const Tutorial: FC<TutorialProps> = ({ handleClick, slides }) => {
         <div className="tutorial-buttons">
           <button
             onClick={() => setSlideIdx(slideIdx - 1)}
-            disabled={slideIdx === 0}
+            className={slideIdx === 0 ? "invisible" : ""}
           >
             <GrPrevious size={50} />
           </button>
-          <button
-            onClick={() => setSlideIdx(slideIdx + 1)}
-            disabled={slideIdx === slides.length - 1}
-          >
-            <GrNext size={50} />
+          <button onClick={() => setSlideIdx(slideIdx + 1)}>
+            <GrNext
+              size={50}
+              className={slideIdx === slides.length - 1 ? "invisible" : ""}
+            />
           </button>
         </div>
 

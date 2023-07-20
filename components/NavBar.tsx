@@ -63,6 +63,9 @@ const NavBar = () => {
           </ul>
         )}
       </div>
+      <span className="text-white text-[20px]">
+        Currently Visualizing: {selectedAlgorithm}
+      </span>
     </div>
   );
 };
