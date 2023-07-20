@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { FC, useContext, useEffect, useState } from "react";
 import { Tuple, FunctionMap } from "@/types/types";
 import {
   calcWeight,
@@ -41,7 +41,13 @@ const maxWeight = 10;
 const defaultButtonStyle =
   "mt-[50px] h-[50px] w-[150px] text-center border-[#50C878] border-[5px] rounded-[8px] hover:bg-[#50C878] text-white setting-button";
 
-const PathfindingVisualizer = () => {
+interface PathfindingVisualizerProps {
+  setShowTutorial: () => void;
+}
+
+const PathfindingVisualizer: FC<PathfindingVisualizerProps> = ({
+  setShowTutorial,
+}) => {
   const [grid, setGrid] = useState(intializeGrid(ROWS, COLS, defaultColor));
   const [currentTargetNodes, setCurrentTargetNodes] = useState(0);
   const [isSettingTarget, setIsSettingTarget] = useState(false);
@@ -452,9 +458,6 @@ const PathfindingVisualizer = () => {
         >
           Set Target
         </button>
-        <button className={defaultButtonStyle} onClick={resetGrid}>
-          Reset
-        </button>
         <button
           className={`${defaultButtonStyle} ${
             showWeights ? "bg-[#50C878]" : ""
@@ -463,6 +466,9 @@ const PathfindingVisualizer = () => {
         >
           Show Weights
         </button>
+        <button className={defaultButtonStyle} onClick={resetGrid}>
+          Reset
+        </button>
         <button
           className={`${defaultButtonStyle} ${
             isPlacingWalls ? "bg-[#50C878]" : ""
@@ -470,6 +476,14 @@ const PathfindingVisualizer = () => {
           onClick={handlePlaceWallClick}
         >
           Place Walls
+        </button>
+        <button
+          className={`${defaultButtonStyle} ${
+            isPlacingWalls ? "bg-[#50C878]" : ""
+          }`}
+          onClick={setShowTutorial}
+        >
+          Open Tutorial
         </button>
       </div>
     </div>

@@ -12,6 +12,10 @@ export default function Home() {
     setShowTutorial(false);
   };
 
+  const handleTutorialButton = () => {
+    setShowTutorial(true);
+  };
+
   return (
     <div className={`home-container ${showTutorial ? "tutorial-active" : ""}`}>
       {showTutorial && (
@@ -21,7 +25,7 @@ export default function Home() {
         />
       )}
 
-      <PathfindingVisualizer />
+      <PathfindingVisualizer setShowTutorial={handleTutorialButton} />
     </div>
   );
 }
