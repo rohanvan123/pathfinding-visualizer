@@ -40,11 +40,11 @@ const Tutorial: FC<TutorialProps> = ({ handleClick, slides }) => {
           >
             <GrPrevious size={50} />
           </button>
-          <button onClick={() => setSlideIdx(slideIdx + 1)}>
-            <GrNext
-              size={50}
-              className={slideIdx === slides.length - 1 ? "invisible" : ""}
-            />
+          <button
+            onClick={() => setSlideIdx(slideIdx + 1)}
+            className={slideIdx === slides.length - 1 ? "invisible" : ""}
+          >
+            <GrNext size={50} />
           </button>
         </div>
 
