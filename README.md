@@ -1,3 +1,6 @@
+Project Hosted Live at [https://rohanvanjani.com/pathfinding-visualizer/](https://rohanvanjani.com/pathfinding-visualizer/)
+<img width="1438" alt="Screenshot 2023-11-17 at 11 30 26 AM" src="https://github.com/rohanvan123/pathfinding-visualizer/assets/67704979/5ca0faf2-e708-447d-bfb9-b65ad69d4ec9">
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
